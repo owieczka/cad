@@ -35,20 +35,19 @@
    |<------------------------------------>|
                                 inner_radius
                                  |<------>|
- 
-   .-------.   .-----.   .------.         |
+   |<->|    wall_thickiness  |<->| 
+    .-.   .---------------.   .-.         |
+   |   | |                 | |   |        
+   |   | '.               .' |   |        |
+   |    '. '.           .' .'    |        
+   |      '. '.       .' .'      |        |
    |        | |       | |        |        
    |        | |       | |        |        |
-   |       .' |       | '.       |        
-   |     .' .'         '. '.     |        |
-   |   .' .'             '. '.   |        
-   |   | |                 | |   |        |
-   |   | |                 | |   |        
-   |   | |                 | |   |        |
+   |        | |       | |        |        
+   |        | |       | |        |        |
    
-   |<->|    wall_thickiness  |<->|
-       |-|
-        gap
+            |-|
+            gap
 //*/
 
 
@@ -98,12 +97,14 @@ module populate_rollers(step_angle, radius, condition=true) {
   }
 }
 
-module bearing(width, inner_radius, outer_radius, roller_radius=[2,4], min_wall_thickness=[2,2],print_angle=45, gap=0.15, bevel=[0.5,0.5], show_cross_section=false) {
+module bearing(width, inner_radius, outer_radius, roller_radius=[2,4], min_wall_thickness=[2,2],print_angle=45, gap=[0.15,0.15], bevel=[0.5,0.5], show_cross_section=false) {
   middle_radius = (outer_radius+inner_radius)/2;
   roller_radius0 = roller_radius[0];
   wall_thickness0 = middle_radius-inner_radius-roller_radius[1];//min_wall_thickness[0];
   wall_thickness1 = min_wall_thickness[1];
   roller_radius1 = roller_radius[1];//(outer_radius-inner_radius-2*gap-2*wall_thickness[0])/2
+  gap0 = gap[0];
+  gap1 = gap[1];
   
   if(wall_thickness0<min_wall_thickness[0]) {
     echo("Requred min_wall_thickness=",min_wall_thickness[0]," but calculated: ",wall_thickness0);
@@ -113,13 +114,13 @@ module bearing(width, inner_radius, outer_radius, roller_radius=[2,4], min_wall_
     inner_ring_cross_section(
       r=inner_radius,
       r0=inner_radius+bevel[0],
-      r1=inner_radius+wall_thickness0-bevel[0]-gap/2,
-      r2=inner_radius+wall_thickness0-gap/2,
-      r3=middle_radius-roller_radius0-gap/2,
+      r1=inner_radius+wall_thickness0-bevel[0]-gap0/2,
+      r2=inner_radius+wall_thickness0-gap0/2,
+      r3=middle_radius-roller_radius0-gap1/2,
       h1=bevel[1],
-      h2=width/2-wall_thickness1/2-tan(print_angle)*(roller_radius1-roller_radius0)-bevel[1]+tan((90-print_angle)/2)*gap/2,
-      h3=tan(print_angle)*(roller_radius1-roller_radius0),
-      h4=wall_thickness1/2-tan((90-print_angle)/2)*gap/2
+      h2=width/2-wall_thickness1/2-tan(print_angle)*(roller_radius1-roller_radius0)-bevel[1]+tan((90-print_angle)/2)*gap0/2,
+      h3=tan(print_angle)*(roller_radius1-roller_radius0)+tan((90-print_angle)/2)*gap1/2-tan((90-print_angle)/2)*gap0/2,
+      h4=wall_thickness1/2-tan((90-print_angle)/2)*gap1/2
     );
   }
   //tan(a)=h3/(r1-r0)
@@ -132,13 +133,13 @@ module bearing(width, inner_radius, outer_radius, roller_radius=[2,4], min_wall_
   populate_rollers(step_angle=step_angle, radius=middle_radius, condition=!show_cross_section) {
       rotate_extrude_cond(angle=360,condition=!show_cross_section) {
           roller_cross_section(
-            r1=roller_radius1-bevel[0]-gap/2,
-            r2=roller_radius1-gap/2,
-            r3=roller_radius0-gap/2,
+            r1=roller_radius1-bevel[0]-gap0/2,
+            r2=roller_radius1-gap0/2,
+            r3=roller_radius0-gap1/2,
             h1=bevel[1],
-            h2=width/2-wall_thickness1/2-tan(print_angle)*(roller_radius1-roller_radius0)-bevel[1]+tan((90-print_angle)/2)*gap/2,
-            h3=tan(print_angle)*(roller_radius1-roller_radius0),
-            h4=wall_thickness1/2-tan((90-print_angle)/2)*gap/2
+            h2=width/2-wall_thickness1/2-tan(print_angle)*(roller_radius1-roller_radius0)-bevel[1]-tan((90-print_angle)/2)*gap0/2,
+            h3=tan(print_angle)*(roller_radius1-roller_radius0)-tan((90-print_angle)/2)*gap1/2+tan((90-print_angle)/2)*gap0/2,
+            h4=wall_thickness1/2+tan((90-print_angle)/2)*gap1/2
         );
     }
   }
@@ -146,17 +147,21 @@ module bearing(width, inner_radius, outer_radius, roller_radius=[2,4], min_wall_
     outer_ring_cross_section(
       r=outer_radius,
       r0=outer_radius-bevel[0],
-      r1=outer_radius-wall_thickness0+bevel[0]+gap/2,
-      r2=outer_radius-wall_thickness0+gap/2,
-      r3=middle_radius+roller_radius0+gap/2,
+      r1=outer_radius-wall_thickness0+bevel[0]+gap0/2,
+      r2=outer_radius-wall_thickness0+gap0/2,
+      r3=middle_radius+roller_radius0+gap1/2,
       h1=bevel[1],
-      h2=width/2-wall_thickness1/2-bevel[1]-tan(print_angle)*(roller_radius1-roller_radius0)+tan((90-print_angle)/2)*gap/2,
-      h3=tan(print_angle)*(roller_radius1-roller_radius0),
-      h4=wall_thickness1/2-tan((90-print_angle)/2)*gap/2
+      h2=width/2-wall_thickness1/2-bevel[1]-tan(print_angle)*(roller_radius1-roller_radius0)+tan((90-print_angle)/2)*gap0/2,
+      h3=tan(print_angle)*(roller_radius1-roller_radius0)+tan((90-print_angle)/2)*gap1/2-tan((90-print_angle)/2)*gap0/2,
+      h4=wall_thickness1/2-tan((90-print_angle)/2)*gap1/2
     );
   }
 }
 
 //bearing(width=10,inner_radius=10, outer_radius=22, roller_radius=[2.0,4.0], min_wall_thickness=[2,2], print_angle=45, gap=0.15, bevel=[0.5,0.5],$fn=120);
 
-bearing(width=10,inner_radius=2, outer_radius=14, roller_radius=[3.0,4.0], min_wall_thickness=[2,2], print_angle=45, gap=0.15, bevel=[0.2,0.2],show_cross_section=false, $fn=120);
+//bearing(width=10,inner_radius=2, outer_radius=14, roller_radius=[3.0,4.0], min_wall_thickness=[2,2], print_angle=45, gap=0.15, bevel=[0.2,0.2],show_cross_section=flase, $fn=120); //It prints
+
+
+bearing(width=5,inner_radius=3, outer_radius=9, roller_radius=[1.25,2.0], min_wall_thickness=[1,0.5], print_angle=45, gap=[0.05,0.15], bevel=[0.2,0.2],show_cross_section=false, $fn=120);//603
+
